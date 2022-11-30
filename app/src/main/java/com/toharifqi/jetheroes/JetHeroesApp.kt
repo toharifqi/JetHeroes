@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,10 +21,12 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,17 +39,23 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.toharifqi.jetheroes.data.HeroRepository
 import com.toharifqi.jetheroes.model.HeroesData
 import com.toharifqi.jetheroes.ui.theme.JetHeroesTheme
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun JetHeroesApp(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: JetHeroesViewModel = viewModel(factory = ViewModelFactory(HeroRepository()))
 ) {
+    val groupedHeroes by viewModel.groupedHeroes.collectAsState()
     Box(modifier = modifier) {
         val scope = rememberCoroutineScope()
         val listState = rememberLazyListState()
@@ -57,12 +66,17 @@ fun JetHeroesApp(
             state = listState,
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
-            items(HeroesData.heroes, key = { it.id }) { hero ->
-                HeroListItem(
-                    name = hero.name,
-                    photoUrl = hero.photoUrl,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            groupedHeroes.forEach { (initial, heroes) ->
+                stickyHeader {
+                    CharacterHeader(char = initial)
+                }
+                items(heroes, key = { it.id }) { hero ->
+                    HeroListItem(
+                        name = hero.name,
+                        photoUrl = hero.photoUrl,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
         AnimatedVisibility(
@@ -150,6 +164,27 @@ fun ScrollToTopButton(
         Icon(
             imageVector = Icons.Filled.KeyboardArrowUp,
             contentDescription = null
+        )
+    }
+}
+
+@Composable
+fun CharacterHeader(
+    char: Char,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = MaterialTheme.colors.primary,
+        modifier = modifier
+    ) {
+        Text(
+            text = char.toString(),
+            fontWeight = FontWeight.Black,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         )
     }
 }
